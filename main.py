@@ -19,7 +19,6 @@ def handle_mention(event, say):
     bot_user_id = app.client.auth_test()["user_id"]
 
     text = text.replace(f"<@{bot_user_id}>", "").strip()
-    print(f"{text=}")
 
     say(f"こんにちは、<@{user}> さん！\n入力されたテキスト: {text}")
 
@@ -32,10 +31,15 @@ def handle_mention(event, say):
         say(nlb_member_lineup_text)
 
         image_path = generate_nlb_member_lineup_image('\n'.join(nlb_member_lineup_list))
-        # TODO: image_pathのimageをslackに投稿
+
+        app.client.files_upload_v2(
+            file=image_path,
+            title="test!",
+            channel=event["channel"],
+            initial_comment="test_initial_comment",
+        )
     except Exception as e:
         say(f"エラーが発生しました: {e}")
-
 
 
 def generate_nlb_member_lineup(input_prompt):
