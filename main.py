@@ -23,14 +23,19 @@ def handle_mention(event, say):
 
     say(f"こんにちは、<@{user}> さん！\n入力されたテキスト: {text}")
 
-    nlb_member_lineup_list = generate_nlb_member_lineup(text)
-    image_path = generate_nlb_member_lineup_image('\n'.join(nlb_member_lineup_list))
-    # TODO: image_pathのimageをslackに投稿
-    nlb_member_lineup_text = ""
-    for member in nlb_member_lineup_list:
-        nlb_member_lineup_text += f"{member}\n"
+    try:
+        nlb_member_lineup_list = generate_nlb_member_lineup(text)
+        nlb_member_lineup_text = ""
+        for member in nlb_member_lineup_list:
+            nlb_member_lineup_text += f"{member}\n"
 
-    say(nlb_member_lineup_text)
+        say(nlb_member_lineup_text)
+
+        image_path = generate_nlb_member_lineup_image('\n'.join(nlb_member_lineup_list))
+        # TODO: image_pathのimageをslackに投稿
+    except Exception as e:
+        say(f"エラーが発生しました: {e}")
+
 
 
 def generate_nlb_member_lineup(input_prompt):
@@ -105,7 +110,7 @@ def generate_nlb_member_lineup_image(lineup_list):
         quality="hd",
         style="vivid"
         )
-    for chunk in enumerate(response.data):
+    for _, chunk in enumerate(response.data):
         with open(image_path, "wb") as f:
             f.write(base64.b64decode(chunk.b64_json))
     return image_path
