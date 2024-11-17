@@ -34,9 +34,8 @@ def handle_mention(event, say):
 
         app.client.files_upload_v2(
             file=image_path,
-            title="test!",
+            title=f"{text}のイメージ写真",
             channel=event["channel"],
-            initial_comment="test_initial_comment",
         )
     except Exception as e:
         say(f"エラーが発生しました: {e}")
