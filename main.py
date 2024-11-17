@@ -3,6 +3,8 @@ from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 import openai
 import json
+import uuid
+import base64
 
 # ボットトークンを渡してアプリを初期化します
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
@@ -22,6 +24,8 @@ def handle_mention(event, say):
     say(f"こんにちは、<@{user}> さん！\n入力されたテキスト: {text}")
 
     nlb_member_lineup_list = generate_nlb_member_lineup(text)
+    image_path = generate_nlb_member_lineup_image('\n'.join(nlb_member_lineup_list))
+    # TODO: image_pathのimageをslackに投稿
     nlb_member_lineup_text = ""
     for member in nlb_member_lineup_list:
         nlb_member_lineup_text += f"{member}\n"
@@ -38,7 +42,7 @@ def generate_nlb_member_lineup(input_prompt):
         "content": [
             {
             "type": "text",
-            "text": "あなたは日本プロ野球の選手で打順をつくる人です。\nテーマに沿ってjson形式でプロ野球の打順を作成してください。\nただし、必ず9人で打順を組んでください\n---\n[\n\"1番（ポジション）:背番号：球団：選手名\",\n\"2番（ポジション）:背番号：球団：選手名\",\n\"3番（ポジション）:背番号：球団：選手名\",\n\"4番（ポジション）:背番号：球団：選手名\",\n\"5番（ポジション）:背番号：球団：選手名\",\n\"6番（ポジション）:背番号：球団：選手名\",\n\"7番（ポジション）:背番号：球団：選手名\",\n\"8番（ポジション）:背番号：球団：選手名\",\n\"9番（ポジション）:背番号：球団：選手名\"\n]"
+            "text": "あなたは日本プロ野球の選手で打順をつくる人です。\nテーマに沿ってjson形式でプロ野球の打順を作成してください。\nただし、必ず9人で打順を組んでください\n---\n[\n\"1番（ポジション）：球団：選手名\",\n\"2番（ポジション）：球団：選手名\",\n\"3番（ポジション）：球団：選手名\",\n\"4番（ポジション）：球団：選手名\",\n\"5番（ポジション）：球団：選手名\",\n\"6番（ポジション）：球団：選手名\",\n\"7番（ポジション）：球団：選手名\",\n\"8番（ポジション）：球団：選手名\",\n\"9番（ポジション）：球団：選手名\"\n]"
             }
         ]
         },
@@ -74,7 +78,7 @@ def generate_nlb_member_lineup(input_prompt):
                 "description": "Array representing the batting order and positions of players",
                 "items": {
                     "type": "string",
-                    "description": "String format of batting position and player name, e.g., '1番（ポジション）:背番号：球団：選手名'"
+                    "description": "String format of batting position and player name, e.g., '1番（ポジション）：球団：選手名'"
                 }
                 }
             },
@@ -89,6 +93,22 @@ def generate_nlb_member_lineup(input_prompt):
 
     json_data = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
     return json_data['lineup']
+
+def generate_nlb_member_lineup_image(lineup_list):
+    image_path = f"./lineup_image/{uuid.uuid4()}.png"
+    response = openai.images.generate(
+        model="dall-e-3",
+        prompt=lineup_list + "リストの特徴を活かしたポスターの画像生成お願いします。",
+        n=1,  # 生成数
+        size="1024x1024",
+        response_format="b64_json",
+        quality="hd",
+        style="vivid"
+        )
+    for chunk in enumerate(response.data):
+        with open(image_path, "wb") as f:
+            f.write(base64.b64decode(chunk.b64_json))
+    return image_path
 
 
 if __name__ == "__main__":
