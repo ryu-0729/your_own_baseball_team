@@ -17,10 +17,11 @@ def handle_mention(event, say):
     user = event["user"]
     text = event.get("text", "")
     bot_user_id = app.client.auth_test()["user_id"]
+    thread_ts = event.get("ts")
 
     text = text.replace(f"<@{bot_user_id}>", "").strip()
 
-    say(f"こんにちは、<@{user}> さん！\n入力されたテキスト: {text}")
+    say(f"こんにちは、<@{user}> さん！\n入力されたテキスト: {text}", thread_ts=thread_ts)
 
     try:
         nlb_member_lineup_list = generate_nlb_member_lineup(text)
@@ -28,7 +29,7 @@ def handle_mention(event, say):
         for member in nlb_member_lineup_list:
             nlb_member_lineup_text += f"{member}\n"
 
-        say(nlb_member_lineup_text)
+        say(nlb_member_lineup_text, thread_ts=thread_ts)
 
         image_path = generate_nlb_member_lineup_image('\n'.join(nlb_member_lineup_list))
 
@@ -36,9 +37,10 @@ def handle_mention(event, say):
             file=image_path,
             title=f"{text}のイメージ写真",
             channel=event["channel"],
+            thread_ts=thread_ts,
         )
     except Exception as e:
-        say(f"エラーが発生しました: {e}")
+        say(f"エラーが発生しました: {e}", thread_ts=thread_ts)
 
 
 def generate_nlb_member_lineup(input_prompt):
